@@ -22,6 +22,18 @@ class ParkingRepository:
         finally: conn.close()
 
     @staticmethod
+    def atualizar_perfil_usuario(usuario, senha, apelido, email):
+        conn = Database.get_connection()
+        hash_s = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("UPDATE usuarios SET senha=%s, apelido=%s, email=%s, primeiro_acesso=FALSE WHERE usuario=%s", (hash_s, apelido, email, usuario))
+                conn.commit()
+                return True
+        except Error: return False
+        finally: conn.close()
+
+    @staticmethod
     def buscar_dados_recuperacao(identificador: str) -> dict:
         conn = Database.get_connection()
         try:
@@ -79,7 +91,8 @@ class ParkingRepository:
                 cursor.execute("INSERT INTO fluxo (placa) VALUES (%s)", (placa,))
                 conn.commit()
                 return True, f"Entrada: {placa}"
-        except Error: return False, "Erro na entrada."
+        except Error as e: 
+            return False, f"Erro na entrada."
         finally: conn.close()
 
     @staticmethod
@@ -89,7 +102,7 @@ class ParkingRepository:
             with conn.cursor() as cursor:
                 cursor.execute("UPDATE fluxo SET data_saida = NOW() WHERE placa = %s AND data_saida IS NULL", (placa,))
                 conn.commit()
-                return (True, "Saída OK") if cursor.rowcount > 0 else (False, "Não encontrado.")
+                return (True, "Saída OK") if cursor.rowcount > 0 else (False, "Veículo não encontrado no pátio.")
         except Error: return False, "Erro na saída."
         finally: conn.close()
 
@@ -150,18 +163,7 @@ class ParkingRepository:
                 if not cat: return False, "Categoria inválida."
                 cursor.execute("INSERT INTO veiculos (placa, proprietario, id_categoria, tipo_veiculo) VALUES (%s,%s,%s,%s)", (placa, nome, cat[0], veiculo))
                 conn.commit()
-                return True, "Cadastrado!"
-        except Error: return False, "Erro no cadastro."
-        finally: conn.close()
-
-    @staticmethod
-    def atualizar_perfil_usuario(usuario, senha, apelido, email):
-        conn = Database.get_connection()
-        hash_s = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("UPDATE usuarios SET senha=%s, apelido=%s, email=%s, primeiro_acesso=FALSE WHERE usuario=%s", (hash_s, apelido, email, usuario))
-                conn.commit()
-                return True
-        except Error: return False
+                return True, "Veículo cadastrado com sucesso!"
+        except Error as e: 
+            return False, "Placa já cadastrada!" if e.errno == 1062 else "Erro interno no cadastro."
         finally: conn.close()

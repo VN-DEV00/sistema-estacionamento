@@ -23,6 +23,14 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'cria_key_2026')
 # Inicializa o Pool de Conexão com o Banco
 Database.initialize()
 
+# --- SEGURANÇA CONTRA "VOLTAR" DEPOIS DO LOGOUT ---
+@app.after_request
+def add_header(response):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # --- UTILITÁRIOS ---
 def login_required_roles(roles):
     def decorator(f):
@@ -39,7 +47,14 @@ def login_required_roles(roles):
 
 def enviar_email_recuperacao(destinatario, codigo):
     mail_user = os.getenv('MAIL_USER')
-    mail_pass = os.getenv('MAIL_PASSWORD').replace(" ", "")
+    mail_pass = os.getenv('MAIL_PASSWORD')
+    
+    # Trava anti-crash: Se as variáveis do Railway não carregarem, avisa sem derrubar o site
+    if not mail_user or not mail_pass:
+        logging.error("Variáveis de E-MAIL não configuradas no ambiente.")
+        return False
+
+    mail_pass = mail_pass.replace(" ", "")
     
     corpo = f"Seu código de recuperação de senha é: {codigo}\nEste código expira em 15 minutos."
     msg = MIMEText(corpo)
@@ -53,7 +68,7 @@ def enviar_email_recuperacao(destinatario, codigo):
             server.send_message(msg)
         return True
     except Exception as e:
-        logging.error(f"Erro SMTP: {e}")
+        logging.error(f"Erro SMTP ao tentar enviar o email: {e}")
         return False
 
 # --- LÓGICA DE CÂMERA ---
@@ -74,7 +89,7 @@ def video_feed_entrada():
 def video_feed_saida():
     return Response(gen_frames(1), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# --- ROTAS DE AUTENTICAÇÃO ---
+# --- ROTAS DE AUTENTICAÇÃO E PERFIL ---
 @app.route('/')
 def index():
     return redirect(url_for('menu')) if 'usuario' in session else redirect(url_for('login'))
@@ -99,6 +114,17 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/configurar_perfil', methods=['GET', 'POST'])
+def configurar_perfil():
+    if 'usuario' not in session: return redirect(url_for('login'))
+    if request.method == 'POST':
+        if ParkingRepository.atualizar_perfil_usuario(session.get('username_real'), request.form.get('nova_senha'), request.form.get('apelido'), request.form.get('email')):
+            session['usuario'] = request.form.get('apelido')
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('menu'))
+    return render_template('configurar_perfil.html')
+
+# --- ROTAS DE RECUPERAÇÃO DE SENHA ---
 @app.route('/recuperar-senha', methods=['GET', 'POST'])
 def recuperar_senha():
     if request.method == 'POST':
@@ -109,9 +135,14 @@ def recuperar_senha():
             if ParkingRepository.salvar_codigo_recuperacao(dados['usuario'], codigo):
                 if enviar_email_recuperacao(dados['email'], codigo):
                     session['usuario_recuperacao'] = dados['usuario']
-                    flash('Código enviado ao e-mail!', 'success')
+                    flash('Código enviado ao e-mail! Verifique sua caixa de entrada.', 'success')
                     return redirect(url_for('validar_codigo_rota'))
-        flash('Usuário/E-mail não encontrado ou erro de envio.', 'danger')
+                else:
+                    flash('Erro ao enviar e-mail. Verifique a configuração do servidor SMTP.', 'danger')
+            else:
+                flash('Erro ao gerar código no banco de dados.', 'danger')
+        else:
+            flash('Usuário ou E-mail não encontrado.', 'warning')
     return render_template('recuperar_senha.html')
 
 @app.route('/validar-codigo', methods=['GET', 'POST'])
@@ -120,22 +151,12 @@ def validar_codigo_rota():
     if request.method == 'POST':
         if ParkingRepository.validar_codigo_e_redefinir_senha(session['usuario_recuperacao'], request.form.get('codigo'), request.form.get('nova_senha')):
             session.pop('usuario_recuperacao', None)
-            flash('Senha alterada!', 'success')
+            flash('Senha alterada com sucesso! Faça login.', 'success')
             return redirect(url_for('login'))
         flash('Código inválido ou expirado.', 'danger')
     return render_template('validar_codigo.html')
 
-@app.route('/configurar_perfil', methods=['GET', 'POST'])
-def configurar_perfil():
-    if 'usuario' not in session: return redirect(url_for('login'))
-    if request.method == 'POST':
-        if ParkingRepository.atualizar_perfil_usuario(session.get('username_real'), request.form.get('nova_senha'), request.form.get('apelido'), request.form.get('email')):
-            session['usuario'] = request.form.get('apelido')
-            flash('Perfil atualizado!', 'success')
-            return redirect(url_for('menu'))
-    return render_template('configurar_perfil.html')
-
-# --- OPERAÇÕES E CONSULTAS ---
+# --- VIEWS PRINCIPAIS E MONITORAMENTO ---
 @app.route('/menu')
 def menu():
     return render_template('menu.html') if 'usuario' in session else redirect(url_for('login'))
@@ -156,6 +177,7 @@ def monitoramento_hub():
 def visualizar_cameras(tipo):
     return render_template('visualizar_cameras.html', tipo=tipo)
 
+# --- CONSULTAS ---
 @app.route('/consultar')
 @login_required_roles(['Admin'])
 def consultar():
@@ -183,6 +205,7 @@ def consultar_perfil(tipo):
     dados = ParkingRepository.get_all_present() if tipo == 'Geral' else ParkingRepository.get_vehicles_by_profile(tipo)
     return render_template('consultar_perfil.html', tipo=tipo, dados=dados)
 
+# --- OPERAÇÕES E REGISTROS ---
 @app.route('/entrada', methods=['GET', 'POST'])
 @login_required_roles(['Admin', 'Operador'])
 def entrada():
