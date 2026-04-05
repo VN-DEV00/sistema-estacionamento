@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Relatório por Tempo{% endblock %}
+
+{% block content %}
+<style>
+    /* Tabela Estilo Glass */
+    .glass-table {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: rgba(138, 43, 226, 0.2);
+        color: #bb86fc;
+        border: none;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        padding: 15px;
+    }
+
+    .table tbody td {
+        color: #e0e0e0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 15px;
+    }
+
+    .table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transition: 0.3s;
+    }
+
+    /* Placa Estilo Metal/Neon */
+    .badge-placa {
+        background: #1a1a1a;
+        color: #fff;
+        font-family: 'Monaco', 'Consolas', monospace;
+        border: 1px solid #333;
+        padding: 5px 10px;
+        border-radius: 5px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    }
+
+    /* Status Cores */
+    .status-no-patio { color: #00ff88; font-weight: bold; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
+    .status-saiu { color: #aaa; }
+
+    /* Badge Vínculo */
+    .badge-vinculo {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid rgba(187, 134, 252, 0.3);
+        background: rgba(187, 134, 252, 0.1);
+        color: #bb86fc;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0 text-white fw-bold">
+            <i class="bi bi-clock-history text-primary me-2"></i> Filtro por Tempo
+        </h3>
+        <a href="{{ url_for('consultar') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="glass-card mb-4 p-4">
+        <form method="POST" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label text-light small fw-bold">Data Inicial:</label>
+                <input type="date" name="de" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label text-light small fw-bold">Data Final:</label>
+                <input type="date" name="ate" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn w-100 fw-bold py-2" style="background: #bb86fc; color: #000; border-radius: 10px; box-shadow: 0 4px 15px rgba(187, 134, 252, 0.3);">
+                    <i class="bi bi-search"></i> BUSCAR
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if dados %}
+    <div class="glass-table">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Proprietário</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                        <th class="text-end">Vínculo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linha in dados %}
+                    <tr>
+                        <td><span class="badge-placa">{{ linha.placa }}</span></td>
+                        <td>
+                            {% if linha.proprietario %}
+                                <span class="fw-bold">{{ linha.proprietario }}</span>
+                            {% else %}
+                                <span class="text-muted">---</span>
+                            {% endif %}
+                        </td>
+                        <td class="small"><i class="bi bi-calendar-check me-1 text-info"></i> {{ linha.data_entrada }}</td>
+                        <td class="small">
+                            {% if linha.data_saida %}
+                                <span class="status-saiu"><i class="bi bi-calendar-x me-1"></i> {{ linha.data_saida }}</span>
+                            {% else %}
+                                <span class="status-no-patio"><i class="bi bi-geo-alt-fill me-1"></i> No Pátio</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <span class="badge-vinculo">
+                                {{ linha.categoria if linha.categoria else 'Visitante' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+        {% if request.method == 'POST' %}
+        <div class="text-center mt-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <p class="text-muted mt-2">Nenhum registro encontrado para este período.</p>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

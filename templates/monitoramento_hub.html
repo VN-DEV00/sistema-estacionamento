@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Monitoramento{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="text-white fw-bold mb-4"><i class="bi bi-eye-fill text-danger me-2"></i>Centro de Monitoramento</h3>
+    
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <a href="{{ url_for('visualizar_cameras', tipo='entrada') }}" class="report-card" style="text-decoration: none;">
+                <div class="icon-box text-success"><i class="bi bi-camera-video"></i></div>
+                <h5 class="text-white fw-bold">Câmera 01</h5>
+                <p class="text-muted small">Portão de Entrada Principal</p>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ url_for('visualizar_cameras', tipo='saida') }}" class="report-card" style="text-decoration: none;">
+                <div class="icon-box text-danger"><i class="bi bi-camera-video-fill"></i></div>
+                <h5 class="text-white fw-bold">Câmera 02</h5>
+                <p class="text-muted small">Saída de Veículos</p>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="{{ url_for('visualizar_cameras', tipo='mosaico') }}" class="report-card" style="text-decoration: none; border: 1px solid #bb86fc;">
+                <div class="icon-box text-primary"><i class="bi bi-grid-1x2"></i></div>
+                <h5 class="text-white fw-bold">Visão Geral</h5>
+                <p class="text-muted small">Mosaico (Entrada e Saída)</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="mt-5 text-center">
+        <a href="{{ url_for('menu') }}" class="btn btn-outline-light rounded-pill px-4"><i class="bi bi-arrow-left"></i> Voltar ao Dashboard</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Ocupação: {{ tipo }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Container com efeito de vidro */
+    .glass-table-container {
+        background: rgba(255, 255, 255, 0.02) !important;
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 10px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Tira o branco da tabela */
+    .table { color: #e0e0e0 !important; margin-bottom: 0; }
+    .table thead th {
+        background: rgba(138, 43, 226, 0.15);
+        color: #bb86fc;
+        border: none;
+        padding: 18px;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 1.5px;
+    }
+
+    .table tbody td {
+        padding: 18px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        background: transparent !important;
+    }
+
+    /* Estilo da Placa */
+    .badge-placa {
+        background: #121212;
+        color: #ffffff;
+        font-family: 'JetBrains Mono', monospace;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #333;
+        box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+        font-weight: bold;
+    }
+
+    /* Ponto pulsante de Status */
+    .status-online {
+        color: #00ff88;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .pulse-dot {
+        width: 8px; height: 8px;
+        background: #00ff88;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #00ff88;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 0.7; }
+        70% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.7; }
+    }
+
+    /* Botão Voltar Estilizado */
+    .btn-voltar {
+        background: rgba(255,255,255,0.05);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 8px 20px;
+        transition: 0.3s;
+        text-decoration: none;
+    }
+    .btn-voltar:hover {
+        background: #bb86fc;
+        color: black;
+        transform: translateX(-5px);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-white fw-bold m-0"><i class="bi bi-people-fill text-primary me-2"></i> Ocupação: {{ tipo }}</h3>
+        <a href="{{ url_for('consultar') }}" class="btn-voltar">
+            <i class="bi bi-arrow-left me-2"></i> Voltar para Consultas
+        </a>
+    </div>
+
+    <div class="glass-table-container">
+        {% if dados %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Proprietário</th>
+                        <th>Entrada</th>
+                        {% if tipo == 'Geral' %}<th>Vínculo</th>{% endif %}
+                        <th class="text-end">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linha in dados %}
+                    <tr>
+                        <td><span class="badge-placa">{{ linha.placa }}</span></td>
+                        <td><span class="text-white">{{ linha.proprietario or '---' }}</span></td>
+                        <td class="text-muted small">{{ linha.data_entrada }}</td>
+                        {% if tipo == 'Geral' %}
+                        <td>
+                            <span class="badge" style="background: rgba(187,134,252,0.1); color: #bb86fc; border: 1px solid rgba(187,134,252,0.2);">
+                                {{ linha.categoria or 'Visitante' }}
+                            </span>
+                        </td>
+                        {% endif %}
+                        <td class="text-end">
+                            <div class="status-online justify-content-end">
+                                <div class="pulse-dot"></div> No Pátio
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">Nenhum veículo encontrado nesta categoria no momento.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

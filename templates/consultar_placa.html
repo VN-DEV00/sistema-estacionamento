@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Histórico por Placa{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-white fw-bold m-0">Buscar por Placa</h3>
+        <a href="{{ url_for('consultar') }}" class="btn-voltar" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 20px; text-decoration: none;">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <div class="glass-card mb-4 p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;">
+        <form method="POST" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-light small">Placa (Mercosul):</label>
+                <input type="text" name="placa" class="form-control text-center fw-bold" placeholder="AAA0A00" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-light small">De:</label>
+                <input type="date" name="de" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-light small">Até:</label>
+                <input type="date" name="ate" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn w-100 fw-bold" style="background: #bb86fc; color: black; border-radius: 10px; padding: 10px;">PESQUISAR</button>
+            </div>
+        </form>
+    </div>
+
+    {% if dados %}
+    <div class="glass-table-container" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 10px;">
+        <div class="table-responsive">
+            <table class="table text-white">
+                <thead style="color: #bb86fc; border-bottom: 2px solid rgba(138,43,226,0.3);">
+                    <tr><th>Placa</th><th>Entrada</th><th>Saída</th></tr>
+                </thead>
+                <tbody>
+                    {% for linha in dados %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td class="py-3"><span style="background: #121212; padding: 5px 10px; border-radius: 5px; font-family: monospace;">{{ linha.placa }}</span></td>
+                        <td>{{ linha.data_entrada }}</td>
+                        <td class="{{ 'text-success fw-bold' if not linha.data_saida else 'text-muted' }}">
+                            {{ linha.data_saida or 'Ainda no Pátio' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

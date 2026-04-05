@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Consultas{% endblock %}
+
+{% block content %}
+<style>
+    .accordion-item {
+        background: rgba(30, 30, 40, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 15px !important;
+        margin-bottom: 15px;
+        overflow: hidden;
+    }
+    .accordion-button {
+        background: transparent !important;
+        color: white !important;
+        font-weight: bold;
+        padding: 20px;
+        box-shadow: none !important;
+    }
+    .accordion-button:not(.collapsed) {
+        background: rgba(138, 43, 226, 0.1) !important;
+        color: #bb86fc !important;
+    }
+    .accordion-button::after { filter: invert(1); }
+
+    .list-group-item {
+        background: transparent !important;
+        border: none !important;
+        padding: 15px 25px !important;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        color: #ccc !important;
+        text-decoration: none;
+    }
+    .list-group-item:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: white !important;
+        padding-left: 35px !important;
+    }
+    .list-group-item i { margin-right: 15px; font-size: 1.2rem; }
+</style>
+
+<div class="container-fluid">
+    <h3 class="mb-4 text-white fw-bold">Módulo de Consultas</h3>
+
+    <div class="accordion" id="accordionConsultas">
+        
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                    <i class="bi bi-journal-text text-primary me-2"></i> Relatórios de Histórico
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionConsultas">
+                <div class="accordion-body p-0">
+                    <div class="list-group">
+                        <a href="{{ url_for('consultar_placa') }}" class="list-group-item">
+                            <i class="bi bi-search text-info"></i> Buscar por Placa
+                        </a>
+                        <a href="{{ url_for('consultar_periodo') }}" class="list-group-item">
+                            <i class="bi bi-calendar-range text-danger"></i> Histórico por Tempo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                    <i class="bi bi-geo-alt-fill text-success me-2"></i> Ocupação em Tempo Real
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionConsultas">
+                <div class="accordion-body p-0">
+                    <div class="list-group">
+                        <a href="{{ url_for('consultar_perfil', tipo='Geral') }}" class="list-group-item fw-bold text-white">
+                            <i class="bi bi-people-fill"></i> GERAL (Todos no Pátio)
+                        </a>
+                        <a href="{{ url_for('consultar_perfil', tipo='Professor') }}" class="list-group-item">
+                            <i class="bi bi-person-badge text-info"></i> Somente Professores
+                        </a>
+                        <a href="{{ url_for('consultar_perfil', tipo='Aluno') }}" class="list-group-item">
+                            <i class="bi bi-mortarboard text-success"></i> Somente Alunos
+                        </a>
+                        <a href="{{ url_for('consultar_perfil', tipo='Visitante') }}" class="list-group-item">
+                            <i class="bi bi-person-walking text-warning"></i> Somente Visitantes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

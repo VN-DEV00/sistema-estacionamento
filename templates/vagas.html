@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Painel de Vagas{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilos fixos - VS Code entende perfeitamente aqui */
+    .vaga-card { border: 1px solid rgba(138, 43, 226, 0.2); position: relative; overflow: hidden; }
+    
+    .status-bom { --cor-vaga: #00ff88; }
+    .status-alerta { --cor-vaga: #ffcc00; }
+    .status-critico { --cor-vaga: #ff4757; }
+
+    .vaga-numero { 
+        font-size: 6rem; 
+        font-weight: 900; 
+        color: var(--cor-vaga); 
+        text-shadow: 0 0 30px rgba(var(--cor-vaga), 0.3); 
+    }
+    .vaga-barra { 
+        background: var(--cor-vaga) !important; 
+        box-shadow: 0 0 15px var(--cor-vaga); 
+        transition: width 1s ease-in-out;
+    }
+    .vaga-texto { color: var(--cor-vaga); font-size: 14px; font-weight: 500; }
+</style>
+
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-6 col-lg-4 text-center">
+        
+        {% if total > 0 %}
+            {% set porcentagem = (disponiveis / total) * 100 %}
+            
+            {% if porcentagem > 40 %}
+                {% set classe_status = 'status-bom' %}
+            {% elif porcentagem > 15 %}
+                {% set classe_status = 'status-alerta' %}
+            {% else %}
+                {% set classe_status = 'status-critico' %}
+            {% endif %}
+
+            <div class="glass-card p-5 vaga-card {{ classe_status }}">
+                
+                <h3 class="mb-4 text-white fw-bold">Disponibilidade</h3>
+
+                <div style="position: relative; display: inline-block;">
+                    <span class="vaga-numero">{{ disponiveis }}</span>
+                    <span style="font-size: 2rem; color: #555; font-weight: bold;">/{{ total }}</span>
+                </div>
+
+                <div class="progress mt-4" style="height: 10px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <div id="barra-progresso" class="progress-bar vaga-barra" role="progressbar"></div>
+                </div>
+
+                <p class="mt-4 mb-0 vaga-texto">
+                    {% if porcentagem > 40 %}
+                        <i class="bi bi-check-circle-fill"></i> Estacionamento Tranquilo
+                    {% elif porcentagem > 15 %}
+                        <i class="bi bi-exclamation-triangle-fill"></i> Vagas Limitadas
+                    {% else %}
+                        <i class="bi bi-x-circle-fill"></i> Pátio Quase Lotado
+                    {% endif %}
+                </p>
+
+                <p class="text-muted mt-3 small" style="opacity: 0.6;"><i class="bi bi-arrow-repeat"></i> Atualizado em tempo real</p>
+            </div>
+            
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const barra = document.getElementById('barra-progresso');
+                    if (barra) {
+                        barra.style.width = "{{ porcentagem }}%";
+                    }
+                });
+            </script>
+
+        {% else %}
+            <div class="glass-card p-5">
+                <div class="alert alert-warning">Aguardando dados das vagas...</div>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Registrar Entrada{% endblock %}
+
+{% block content %}
+<style>
+    /* Card de Entrada com Glassmorphism */
+    .entry-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        padding: 40px;
+        max-width: 500px;
+        margin: 50px auto;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    /* Input Estilo Placa */
+    .plate-input {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 2px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        color: #fff !important;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2rem !important;
+        letter-spacing: 5px;
+        text-align: center;
+        margin-bottom: 25px;
+        transition: 0.3s;
+        text-transform: uppercase;
+    }
+
+    .plate-input:focus {
+        border-color: #00ff88 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.3) !important;
+    }
+
+    /* O Botão Corrigido */
+    .btn-liberar {
+        background: #00ff88;
+        color: #000;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        border-radius: 12px;
+        padding: 18px;
+        width: 100%;
+        transition: 0.3s;
+        box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+    }
+
+    .btn-liberar:hover {
+        background: #00cc6e;
+        transform: scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 255, 136, 0.6);
+    }
+
+    .text-muted-custom {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container">
+    <div class="entry-card">
+        <h2 class="text-white fw-bold mb-1">Registrar Entrada</h2>
+        <p class="text-muted-custom">Liberação de acesso ao pátio</p>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label text-light small d-block mb-2">Placa do Veículo (AAA0A00)</label>
+                <input type="text" 
+                       name="placa" 
+                       class="form-control plate-input" 
+                       placeholder="AAA0A00" 
+                       maxlength="7" 
+                       required 
+                       autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-liberar">
+                <i class="bi bi-shield-check me-2"></i> LIBERAR ENTRADA
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

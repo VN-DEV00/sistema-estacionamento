@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Visualizando Câmeras{% endblock %}
+
+{% block content %}
+<style>
+    /* O VS Code não vai mais reclamar: usando variáveis nativas do CSS */
+    .camera-layout {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: var(--colunas-grid);
+        max-width: var(--largura-maxima);
+        margin: 0 auto;
+    }
+
+    .camera-container {
+        background: rgba(0, 0, 0, 0.4);
+        border: 2px solid rgba(138, 43, 226, 0.2);
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+        /* Mantém o formato 16:9 exato mesmo vazio */
+        aspect-ratio: 16 / 9; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .camera-label {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #bb86fc;
+        padding: 4px 12px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: bold;
+        z-index: 10;
+        border-left: 3px solid #bb86fc;
+    }
+
+    .no-signal {
+        position: absolute;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.1);
+        font-family: monospace;
+    }
+
+    .video-stream {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 5;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-white fw-bold m-0"><i class="bi bi-camera-video me-2"></i> Monitoramento: {{ tipo|capitalize }}</h3>
+        <a href="{{ url_for('monitoramento_hub') }}" class="btn btn-outline-light btn-sm rounded-pill px-3">Voltar</a>
+    </div>
+
+    <div class="camera-layout" style="--colunas-grid: {{ '1fr 1fr' if tipo == 'mosaico' else '1fr' }}; --largura-maxima: {{ '1200px' if tipo == 'mosaico' else '800px' }};">
+        
+        {% if tipo == 'entrada' or tipo == 'mosaico' %}
+        <div class="camera-container">
+            <div class="camera-label">CAM 01 - ENTRADA</div>
+            <div class="no-signal">
+                <i class="bi bi-camera-video-off fs-1"></i><br>AGUARDANDO SINAL
+            </div>
+            <img src="{{ url_for('video_feed_entrada') }}" class="video-stream" onerror="this.style.display='none'">
+        </div>
+        {% endif %}
+
+        {% if tipo == 'saida' or tipo == 'mosaico' %}
+        <div class="camera-container">
+            <div class="camera-label">CAM 02 - SAÍDA</div>
+            <div class="no-signal">
+                <i class="bi bi-camera-video-off fs-1"></i><br>AGUARDANDO SINAL
+            </div>
+            <img src="{{ url_for('video_feed_saida') }}" class="video-stream" onerror="this.style.display='none'">
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}
