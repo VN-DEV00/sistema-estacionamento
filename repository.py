@@ -26,7 +26,6 @@ class ParkingRepository:
         conn = Database.get_connection()
         try:
             with conn.cursor(dictionary=True) as cursor:
-                # Busca por usuário OU e-mail
                 cursor.execute("SELECT usuario, email FROM usuarios WHERE usuario = %s OR email = %s", (identificador, identificador))
                 return cursor.fetchone()
         except Error: return None
@@ -79,8 +78,8 @@ class ParkingRepository:
             with conn.cursor() as cursor:
                 cursor.execute("INSERT INTO fluxo (placa) VALUES (%s)", (placa,))
                 conn.commit()
-                return True, f"Entrada registrada: {placa}"
-        except Error: return False, "Erro ao registrar entrada."
+                return True, f"Entrada: {placa}"
+        except Error: return False, "Erro na entrada."
         finally: conn.close()
 
     @staticmethod
@@ -90,8 +89,8 @@ class ParkingRepository:
             with conn.cursor() as cursor:
                 cursor.execute("UPDATE fluxo SET data_saida = NOW() WHERE placa = %s AND data_saida IS NULL", (placa,))
                 conn.commit()
-                return (True, "Saída registrada") if cursor.rowcount > 0 else (False, "Veículo não encontrado")
-        except Error: return False, "Erro ao registrar saída."
+                return (True, "Saída OK") if cursor.rowcount > 0 else (False, "Não encontrado.")
+        except Error: return False, "Erro na saída."
         finally: conn.close()
 
     @staticmethod
@@ -109,12 +108,52 @@ class ParkingRepository:
         conn = Database.get_connection()
         try:
             with conn.cursor(dictionary=True) as cursor:
-                query = "SELECT f.*, v.proprietario FROM fluxo f LEFT JOIN veiculos v ON f.placa = v.placa WHERE DATE(f.data_entrada) BETWEEN %s AND %s ORDER BY f.data_entrada DESC"
+                query = "SELECT f.*, v.proprietario, c.nome as categoria FROM fluxo f LEFT JOIN veiculos v ON f.placa = v.placa LEFT JOIN categorias c ON v.id_categoria = c.id_categoria WHERE DATE(f.data_entrada) BETWEEN %s AND %s ORDER BY f.data_entrada DESC"
                 cursor.execute(query, (inicio, fim))
                 return cursor.fetchall()
         except Error: return []
         finally: conn.close()
-    
+
+    @staticmethod
+    def get_vehicles_by_profile(tipo: str) -> List[Dict]:
+        conn = Database.get_connection()
+        try:
+            with conn.cursor(dictionary=True) as cursor:
+                if tipo == "Visitante":
+                    query = "SELECT f.placa, f.data_entrada FROM fluxo f LEFT JOIN veiculos v ON f.placa = v.placa WHERE v.placa IS NULL AND f.data_saida IS NULL ORDER BY f.data_entrada DESC"
+                    cursor.execute(query)
+                else:
+                    query = "SELECT f.placa, v.proprietario, f.data_entrada FROM fluxo f JOIN veiculos v ON f.placa = v.placa JOIN categorias c ON v.id_categoria = c.id_categoria WHERE c.nome = %s AND f.data_saida IS NULL ORDER BY f.data_entrada DESC"
+                    cursor.execute(query, (tipo,))
+                return cursor.fetchall()
+        except Error: return []
+        finally: conn.close()
+
+    @staticmethod
+    def get_all_present() -> List[Dict]:
+        conn = Database.get_connection()
+        try:
+            with conn.cursor(dictionary=True) as cursor:
+                query = "SELECT f.placa, v.proprietario, f.data_entrada, c.nome as categoria FROM fluxo f LEFT JOIN veiculos v ON f.placa = v.placa LEFT JOIN categorias c ON v.id_categoria = c.id_categoria WHERE f.data_saida IS NULL ORDER BY f.data_entrada DESC"
+                cursor.execute(query)
+                return cursor.fetchall()
+        except Error: return []
+        finally: conn.close()
+
+    @staticmethod
+    def register_vehicle(tipo, nome, placa, veiculo):
+        conn = Database.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id_categoria FROM categorias WHERE nome = %s", (tipo,))
+                cat = cursor.fetchone()
+                if not cat: return False, "Categoria inválida."
+                cursor.execute("INSERT INTO veiculos (placa, proprietario, id_categoria, tipo_veiculo) VALUES (%s,%s,%s,%s)", (placa, nome, cat[0], veiculo))
+                conn.commit()
+                return True, "Cadastrado!"
+        except Error: return False, "Erro no cadastro."
+        finally: conn.close()
+
     @staticmethod
     def atualizar_perfil_usuario(usuario, senha, apelido, email):
         conn = Database.get_connection()

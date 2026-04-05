@@ -5,7 +5,7 @@ import time
 import re
 import smtplib
 import random
-from email.mime.text import MIMEText  # Importação corrigida para evitar Erro 500
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response
@@ -24,9 +24,6 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'cria_key_2026')
 Database.initialize()
 
 # --- UTILITÁRIOS ---
-def validar_placa(placa):
-    return re.match(r"^[A-Z]{3}[0-9][A-Z][0-9]{2}$", placa.upper())
-
 def login_required_roles(roles):
     def decorator(f):
         @wraps(f)
@@ -42,16 +39,9 @@ def login_required_roles(roles):
 
 def enviar_email_recuperacao(destinatario, codigo):
     mail_user = os.getenv('MAIL_USER')
-    mail_pass = os.getenv('MAIL_PASSWORD').replace(" ", "") # Remove espaços se houver
+    mail_pass = os.getenv('MAIL_PASSWORD').replace(" ", "")
     
-    corpo = f"""
-    Olá!
-    Recebemos uma solicitação de recuperação de senha.
-    Seu código de verificação é: {codigo}
-    
-    Este código expirará em 15 minutos.
-    """
-    
+    corpo = f"Seu código de recuperação de senha é: {codigo}\nEste código expira em 15 minutos."
     msg = MIMEText(corpo)
     msg['Subject'] = 'Recuperação de Senha - Estacionamento'
     msg['From'] = mail_user
@@ -63,7 +53,7 @@ def enviar_email_recuperacao(destinatario, codigo):
             server.send_message(msg)
         return True
     except Exception as e:
-        logging.error(f"Erro no SMTP: {e}")
+        logging.error(f"Erro SMTP: {e}")
         return False
 
 # --- LÓGICA DE CÂMERA ---
@@ -100,9 +90,7 @@ def login():
                 'username_real': usuario, 
                 'tipo_acesso': res['tipo_acesso']
             })
-            if res.get('primeiro_acesso'):
-                return redirect(url_for('configurar_perfil'))
-            return redirect(url_for('menu'))
+            return redirect(url_for('configurar_perfil')) if res.get('primeiro_acesso') else redirect(url_for('menu'))
         flash('Usuário ou senha incorretos!', 'danger')
     return render_template('login.html')
 
@@ -116,15 +104,14 @@ def recuperar_senha():
     if request.method == 'POST':
         identificador = request.form.get('usuario')
         dados = ParkingRepository.buscar_dados_recuperacao(identificador)
-        
         if dados:
             codigo = str(random.randint(100000, 999999))
             if ParkingRepository.salvar_codigo_recuperacao(dados['usuario'], codigo):
                 if enviar_email_recuperacao(dados['email'], codigo):
                     session['usuario_recuperacao'] = dados['usuario']
-                    flash('Código enviado para seu e-mail!', 'success')
+                    flash('Código enviado ao e-mail!', 'success')
                     return redirect(url_for('validar_codigo_rota'))
-        flash('Usuário ou e-mail não encontrado ou erro no servidor.', 'danger')
+        flash('Usuário/E-mail não encontrado ou erro de envio.', 'danger')
     return render_template('recuperar_senha.html')
 
 @app.route('/validar-codigo', methods=['GET', 'POST'])
@@ -133,7 +120,7 @@ def validar_codigo_rota():
     if request.method == 'POST':
         if ParkingRepository.validar_codigo_e_redefinir_senha(session['usuario_recuperacao'], request.form.get('codigo'), request.form.get('nova_senha')):
             session.pop('usuario_recuperacao', None)
-            flash('Senha alterada! Faça login.', 'success')
+            flash('Senha alterada!', 'success')
             return redirect(url_for('login'))
         flash('Código inválido ou expirado.', 'danger')
     return render_template('validar_codigo.html')
@@ -190,6 +177,12 @@ def consultar_periodo():
         dados = ParkingRepository.get_history_by_range(request.form.get('de'), request.form.get('ate'))
     return render_template('consultar_periodo.html', dados=dados)
 
+@app.route('/consultar_perfil/<tipo>')
+@login_required_roles(['Admin'])
+def consultar_perfil(tipo):
+    dados = ParkingRepository.get_all_present() if tipo == 'Geral' else ParkingRepository.get_vehicles_by_profile(tipo)
+    return render_template('consultar_perfil.html', tipo=tipo, dados=dados)
+
 @app.route('/entrada', methods=['GET', 'POST'])
 @login_required_roles(['Admin', 'Operador'])
 def entrada():
@@ -205,6 +198,15 @@ def saida():
         sucesso, msg = ParkingRepository.register_exit(request.form.get('placa').upper())
         flash(msg, 'success' if sucesso else 'danger')
     return render_template('saida.html')
+
+@app.route('/registrar_veiculo', methods=['GET', 'POST'])
+@login_required_roles(['Admin'])
+def registrar_veiculo():
+    if request.method == 'POST':
+        sucesso, msg = ParkingRepository.register_vehicle(request.form.get('tipo'), request.form.get('nome'), request.form.get('placa').upper(), request.form.get('veiculo'))
+        flash(msg, 'success' if sucesso else 'danger')
+        if sucesso: return redirect(url_for('menu'))
+    return render_template('registrar.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
