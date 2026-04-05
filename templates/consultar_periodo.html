@@ -3,7 +3,7 @@
 
 {% block content %}
 <style>
-    /* Tabela Estilo Glass */
+    /* Tabela Estilo Glass com fundo transparente forçado */
     .glass-table {
         background: rgba(255, 255, 255, 0.03) !important;
         backdrop-filter: blur(10px);
@@ -12,8 +12,12 @@
         overflow: hidden;
     }
 
+    .table {
+        --bs-table-bg: transparent; /* Mata o fundo branco padrão do Bootstrap */
+    }
+
     .table thead th {
-        background: rgba(138, 43, 226, 0.2);
+        background: rgba(138, 43, 226, 0.2) !important;
         color: #bb86fc;
         border: none;
         text-transform: uppercase;
@@ -26,14 +30,14 @@
         color: #e0e0e0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         padding: 15px;
+        background: transparent !important;
     }
 
-    .table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.05);
+    .table tbody tr:hover td {
+        background: rgba(255, 255, 255, 0.05) !important;
         transition: 0.3s;
     }
 
-    /* Placa Estilo Metal/Neon */
     .badge-placa {
         background: #1a1a1a;
         color: #fff;
@@ -44,11 +48,9 @@
         box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
     }
 
-    /* Status Cores */
     .status-no-patio { color: #00ff88; font-weight: bold; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
-    .status-saiu { color: #aaa; }
+    .status-saiu { color: #c4c4c4; } /* Corrigido de #aaa para mais claro */
 
-    /* Badge Vínculo */
     .badge-vinculo {
         padding: 5px 12px;
         border-radius: 20px;
@@ -73,11 +75,11 @@
     <div class="glass-card mb-4 p-4">
         <form method="POST" class="row g-3 align-items-end">
             <div class="col-md-5">
-                <label class="form-label text-light small fw-bold">Data Inicial:</label>
+                <label class="form-label small fw-bold" style="color: #c4c4c4;">Data Inicial:</label>
                 <input type="date" name="de" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
             </div>
             <div class="col-md-5">
-                <label class="form-label text-light small fw-bold">Data Final:</label>
+                <label class="form-label small fw-bold" style="color: #c4c4c4;">Data Final:</label>
                 <input type="date" name="ate" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
             </div>
             <div class="col-md-2">
@@ -107,12 +109,12 @@
                         <td><span class="badge-placa">{{ linha.placa }}</span></td>
                         <td>
                             {% if linha.proprietario %}
-                                <span class="fw-bold">{{ linha.proprietario }}</span>
+                                <span class="fw-bold text-white">{{ linha.proprietario }}</span>
                             {% else %}
-                                <span class="text-muted">---</span>
+                                <span style="color: #c4c4c4;">---</span>
                             {% endif %}
                         </td>
-                        <td class="small"><i class="bi bi-calendar-check me-1 text-info"></i> {{ linha.data_entrada }}</td>
+                        <td class="small text-white"><i class="bi bi-calendar-check me-1 text-info"></i> {{ linha.data_entrada }}</td>
                         <td class="small">
                             {% if linha.data_saida %}
                                 <span class="status-saiu"><i class="bi bi-calendar-x me-1"></i> {{ linha.data_saida }}</span>
@@ -134,8 +136,8 @@
     {% else %}
         {% if request.method == 'POST' %}
         <div class="text-center mt-5">
-            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-            <p class="text-muted mt-2">Nenhum registro encontrado para este período.</p>
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #c4c4c4;"></i>
+            <p class="mt-2" style="color: #c4c4c4;">Nenhum registro encontrado para este período.</p>
         </div>
         {% endif %}
     {% endif %}

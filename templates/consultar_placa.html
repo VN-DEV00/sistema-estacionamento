@@ -2,6 +2,39 @@
 {% block title %}Histórico por Placa{% endblock %}
 
 {% block content %}
+<style>
+    .glass-table {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .table { --bs-table-bg: transparent; }
+    .table thead th {
+        background: rgba(138, 43, 226, 0.2) !important;
+        color: #bb86fc;
+        border: none;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        padding: 15px;
+    }
+    .table tbody td {
+        color: #e0e0e0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 15px;
+        background: transparent !important;
+    }
+    .badge-placa {
+        background: #1a1a1a;
+        color: #fff;
+        font-family: 'Monaco', 'Consolas', monospace;
+        border: 1px solid #333;
+        padding: 5px 10px;
+        border-radius: 5px;
+    }
+</style>
+
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="text-white fw-bold m-0">Buscar por Placa</h3>
@@ -13,37 +46,45 @@
     <div class="glass-card mb-4 p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;">
         <form method="POST" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label text-light small">Placa (Mercosul):</label>
-                <input type="text" name="placa" class="form-control text-center fw-bold" placeholder="AAA0A00" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+                <label class="form-label small" style="color: #c4c4c4;">Placa (Mercosul):</label>
+                <input type="text" name="placa" class="form-control text-center text-uppercase fw-bold" placeholder="AAA0A00" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white;" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label text-light small">De:</label>
-                <input type="date" name="de" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+                <label class="form-label small" style="color: #c4c4c4;">De:</label>
+                <input type="date" name="de" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
             </div>
             <div class="col-md-3">
-                <label class="form-label text-light small">Até:</label>
-                <input type="date" name="ate" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid #444; color: white;" required>
+                <label class="form-label small" style="color: #c4c4c4;">Até:</label>
+                <input type="date" name="ate" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; color-scheme: dark;" required>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn w-100 fw-bold" style="background: #bb86fc; color: black; border-radius: 10px; padding: 10px;">PESQUISAR</button>
+                <button type="submit" class="btn w-100 fw-bold py-2" style="background: #bb86fc; color: black; border-radius: 10px;">PESQUISAR</button>
             </div>
         </form>
     </div>
 
     {% if dados %}
-    <div class="glass-table-container" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 10px;">
+    <div class="glass-table">
         <div class="table-responsive">
-            <table class="table text-white">
-                <thead style="color: #bb86fc; border-bottom: 2px solid rgba(138,43,226,0.3);">
-                    <tr><th>Placa</th><th>Entrada</th><th>Saída</th></tr>
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Entrada</th>
+                        <th>Saída</th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for linha in dados %}
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <td class="py-3"><span style="background: #121212; padding: 5px 10px; border-radius: 5px; font-family: monospace;">{{ linha.placa }}</span></td>
+                    <tr>
+                        <td><span class="badge-placa">{{ linha.placa }}</span></td>
                         <td>{{ linha.data_entrada }}</td>
-                        <td class="{{ 'text-success fw-bold' if not linha.data_saida else 'text-muted' }}">
-                            {{ linha.data_saida or 'Ainda no Pátio' }}
+                        <td>
+                            {% if not linha.data_saida %}
+                                <span class="text-success fw-bold"><i class="bi bi-geo-alt-fill"></i> Ainda no Pátio</span>
+                            {% else %}
+                                <span style="color: #c4c4c4;">{{ linha.data_saida }}</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -51,6 +92,13 @@
             </table>
         </div>
     </div>
+    {% else %}
+        {% if request.method == 'POST' %}
+        <div class="text-center mt-5">
+            <i class="bi bi-search" style="font-size: 3rem; color: #c4c4c4;"></i>
+            <p class="mt-2" style="color: #c4c4c4;">Nenhum registro encontrado para a placa informada neste período.</p>
+        </div>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}
