@@ -23,6 +23,7 @@ usuarios = {
     "Luiz.Felipe": "Luiz.2026",
     "Ryan.Laeber": "Ryan.2026",
     "Giovanni.Brandao": "Giovanni.2026",
+    
 }
 
 print(f"🔄 Tentando conectar em {CONFIG['host']}:{CONFIG['port']}...")

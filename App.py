@@ -207,5 +207,6 @@ def registrar_veiculo():
     return render_template('registrar.html')
 
 if __name__ == '__main__':
-    # Roda o servidor na porta 5000 acessível pela rede local
+    
+    
     app.run(host='0.0.0.0', port=5000, debug=True)
