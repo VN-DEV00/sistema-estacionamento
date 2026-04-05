@@ -181,6 +181,6 @@ class ParkingRepository:
                 conn.commit()
                 return True, "Veículo cadastrado!"
         except Error as e:
-            # CORREÇÃO AQUI: e.errno corrige o problema do Python travar no cadastro!
+            
             return False, "Placa já cadastrada." if e.errno == 1062 else "Erro no cadastro."
         finally: conn.close()
