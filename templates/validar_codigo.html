@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5">
+        <div class="glass-card p-4">
+            <h4 class="text-white fw-bold text-center mb-4">Validar Código</h4>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="text-light small">Código de 6 dígitos:</label>
+                    <input type="text" name="codigo" class="form-control text-center fw-bold" maxlength="6" style="letter-spacing: 5px; font-size: 20px;" required>
+                </div>
+                <div class="mb-4">
+                    <label class="text-light small">Nova Senha:</label>
+                    <input type="password" name="nova_senha" class="form-control" required>
+                </div>
+                <button type="submit" class="btn w-100 fw-bold" style="background: #bb86fc; color: #000;">REDEFINIR SENHA</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 import os
 import logging
 import bcrypt
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
 from database import Database
 from mysql.connector import Error
@@ -48,6 +49,50 @@ class ParkingRepository:
         except Error: return False
         finally: conn.close()
 
+    # --- RECUPERAÇÃO DE SENHA ---
+    @staticmethod
+    def buscar_email_usuario(usuario: str) -> str:
+        conn = Database.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT email FROM usuarios WHERE usuario = %s", (usuario,))
+                res = cursor.fetchone()
+                return res[0] if res else None
+        except Error: return None
+        finally: conn.close()
+
+    @staticmethod
+    def salvar_codigo_recuperacao(usuario: str, codigo: str) -> bool:
+        conn = Database.get_connection()
+        expiracao = datetime.now() + timedelta(minutes=15)
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("DELETE FROM recuperacao_senha WHERE usuario = %s", (usuario,))
+                cursor.execute("INSERT INTO recuperacao_senha (usuario, codigo, expiracao) VALUES (%s, %s, %s)", 
+                               (usuario, codigo, expiracao))
+                conn.commit()
+                return True
+        except Error: return False
+        finally: conn.close()
+
+    @staticmethod
+    def validar_codigo_e_redefinir_senha(usuario: str, codigo: str, nova_senha: str) -> bool:
+        conn = Database.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id FROM recuperacao_senha WHERE usuario = %s AND codigo = %s AND expiracao > NOW()", 
+                               (usuario, codigo))
+                if not cursor.fetchone(): return False
+                
+                senha_hash = bcrypt.hashpw(nova_senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                cursor.execute("UPDATE usuarios SET senha = %s WHERE usuario = %s", (senha_hash, usuario))
+                cursor.execute("DELETE FROM recuperacao_senha WHERE usuario = %s", (usuario,))
+                conn.commit()
+                return True
+        except Error: return False
+        finally: conn.close()
+
+    # --- FLUXO DE VEÍCULOS ---
     @staticmethod
     def register_entry(placa: str) -> Tuple[bool, str]:
         conn = Database.get_connection()
@@ -106,52 +151,6 @@ class ParkingRepository:
         finally: conn.close()
 
     @staticmethod
-    def get_vehicles_by_profile(tipo: str) -> List[Dict]:
-        conn = Database.get_connection()
-        if not conn: return []
-        try:
-            with conn.cursor(dictionary=True) as cursor:
-                if tipo == "Visitante":
-                    query = """
-                        SELECT f.placa, f.data_entrada FROM fluxo f 
-                        LEFT JOIN veiculos v ON f.placa = v.placa 
-                        WHERE v.placa IS NULL AND f.data_saida IS NULL 
-                        ORDER BY f.data_entrada DESC
-                    """
-                    cursor.execute(query)
-                else:
-                    query = """
-                        SELECT f.placa, v.proprietario, f.data_entrada FROM fluxo f 
-                        JOIN veiculos v ON f.placa = v.placa 
-                        JOIN categorias c ON v.id_categoria = c.id_categoria 
-                        WHERE c.nome = %s AND f.data_saida IS NULL 
-                        ORDER BY f.data_entrada DESC
-                    """
-                    cursor.execute(query, (tipo,))
-                return cursor.fetchall()
-        except Error: return []
-        finally: conn.close()
-
-    @staticmethod
-    def get_all_present() -> List[Dict]:
-        conn = Database.get_connection()
-        if not conn: return []
-        try:
-            with conn.cursor(dictionary=True) as cursor:
-                query = """
-                    SELECT f.placa, v.proprietario, f.data_entrada, c.nome as categoria 
-                    FROM fluxo f 
-                    LEFT JOIN veiculos v ON f.placa = v.placa 
-                    LEFT JOIN categorias c ON v.id_categoria = c.id_categoria 
-                    WHERE f.data_saida IS NULL
-                    ORDER BY f.data_entrada DESC
-                """
-                cursor.execute(query)
-                return cursor.fetchall()
-        except Error: return []
-        finally: conn.close()
-
-    @staticmethod
     def get_parking_occupancy() -> Tuple[int, int]:
         total = int(os.getenv('MAX_VAGAS', 250))
         conn = Database.get_connection()
@@ -160,8 +159,7 @@ class ParkingRepository:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT COUNT(*) FROM fluxo WHERE data_saida IS NULL")
                 ocupadas = cursor.fetchone()[0]
-                disponiveis = total - ocupadas
-                return disponiveis, total
+                return total - ocupadas, total
         except Error: return 0, total
         finally: conn.close()
 
@@ -181,6 +179,5 @@ class ParkingRepository:
                 conn.commit()
                 return True, "Veículo cadastrado!"
         except Error as e:
-            
             return False, "Placa já cadastrada." if e.errno == 1062 else "Erro no cadastro."
         finally: conn.close()
